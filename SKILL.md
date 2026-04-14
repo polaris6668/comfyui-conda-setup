@@ -121,32 +121,52 @@ conda run -n cfpy312t290cu130 python -c "import sageattention; print('SageAttent
 
 ---
 
-## 第五步：修复 opencv-python 与 NumPy 2.x 的兼容性问题
+## 第五步：安装 opencv-python（需先关闭 ComfyUI）
 
-### 问题现象
+### 兼容版本
 
-PyTorch 2.9.0 会自动安装 NumPy 2.x（如 2.4.4），而预装的 opencv-python 可能与 NumPy 2.x 的 ABI 不兼容，导致以下错误：
+经测试，以下组合在本环境中兼容：
 
+| 包 | 版本 | 说明 |
+|---|---|---|
+| opencv-python | 4.13.0.92 | 与 NumPy 2.4.4 + PyTorch 2.9.0 兼容 |
+| NumPy | 2.4.4 | opencv-python 4.13.0.92 的依赖，自动安装 |
+
+### 安装命令
+
+```bash
+conda run -n cfpy312t290cu130 pip install --force-reinstall --no-cache-dir opencv-python==4.13.0.92
+```
+
+> **必须先关闭 ComfyUI！** 否则 `cv2.pyd` 被进程锁定，pip 无法覆盖文件（`WinError 5 拒绝访问`）。
+
+### 常见问题
+
+#### 多个 opencv 包冲突
+
+某些 ComfyUI 节点会自动安装 `opencv-contrib-python`、`opencv-python-headless` 等变体。多个 opencv 包共存会导致 `cv2` 模块加载异常（如 `__version__` 缺失、`module 'cv2' has no attribute ...`）。**只保留 `opencv-python` 一个包：**
+
+```bash
+conda run -n cfpy312t290cu130 pip uninstall opencv-contrib-python opencv-python-headless opencv-contrib-python-headless -y
+```
+
+如果卸载也报错（`WinError 17 跨盘符`），先关闭所有 Python 进程再试。
+
+#### 跨盘符 WinError 17 / WinError 5
+
+pip 在 Windows 上卸载包时会尝试将 `.pyd` 文件移动到 C 盘临时目录，如果 conda 环境在 G 盘（不同驱动器），会导致 `os.rename` 失败。解决方法：
+1. 关闭所有占用该包的进程（ComfyUI 等）
+2. 使用 `--force-reinstall` 覆盖安装而非先卸载
+3. 如果仍有残留，手动删除 `site-packages/cv2/` 目录后重装
+
+#### NumPy 2.x ABI 不兼容
+
+旧版 opencv-python（如 4.10.0）与 NumPy 2.x 的 ABI 不兼容，报错：
 ```
 AttributeError: _ARRAY_API not found
 ImportError: numpy.core.multiarray failed to import
 ```
-
-这会导致 ComfyUI 中所有使用 `import cv2` 的自定义节点全部崩溃（如 WAS Node Suite 等）。错误数量可能非常多（几十个节点同时报错）。
-
-### 修复方法
-
-强制重新安装 opencv-python，让它编译/链接到当前的 NumPy 2.x：
-
-```bash
-conda run -n cfpy312t290cu130 pip install --force-reinstall --no-cache-dir opencv-python
-```
-
-`--force-reinstall` 确保完全重装，`--no-cache-dir` 避免使用本地缓存的旧版二进制文件。
-
-### 为什么不能自动修复
-
-ComfyUI 的 WAS Node Suite 等节点检测到 opencv 问题后会尝试自动修复（自动 `pip install --upgrade opencv-python`），但在 Windows 上可能因为跨盘符文件操作失败（`WinError 17` 和 `WinError 5` 权限错误）导致自动修复失败。因此必须手动执行此步骤。
+升级到 `opencv-python >= 4.13.0` 即可解决。
 
 ---
 
@@ -201,8 +221,8 @@ print('All packages imported successfully!')
 | xformers | 0.0.33 |
 | SageAttention | 最新版 (1.0.6+) |
 | triton-windows | 最新版 (3.6.0+) |
-| opencv-python | 最新版（NumPy 2.x 兼容） |
-| NumPy | 2.x |
+| opencv-python | 4.13.0.92（NumPy 2.x 兼容） |
+| NumPy | 2.4.4 |
 
 ## 硬件参考配置
 
