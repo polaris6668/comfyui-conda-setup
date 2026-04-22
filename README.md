@@ -12,7 +12,7 @@
 |------|------|
 | 操作系统 | Windows 10 / 11 |
 | GPU 驱动 | NVIDIA 显卡驱动 (≥ 560.00) |
-| Conda 环境 | `cfpy312t290cu130` |
+| Conda 环境 | 自定义名称（下文以 `cfpy312t290cu130` 为例） |
 | Python | 3.12 |
 | PyTorch | 2.9.0 |
 | CUDA Toolkit | 13.0 |
@@ -45,6 +45,8 @@
 - 最新 NVIDIA 驱动
 
 ### 一键安装
+
+> **关于环境名：** Conda 环境名可自定义。以下命令以 `cfpy312t290cu130` 为例，命名规则为 `cf`（ComfyUI）+ `py312`（Python 3.12）+ `t290`（PyTorch 2.9.0）+ `cu130`（CUDA 13.0），方便识别版本。你也可以用任意名称（如 `comfyui`），将下文所有 `cfpy312t290cu130` 替换即可。
 
 ```bash
 # 1. 创建 conda 环境
