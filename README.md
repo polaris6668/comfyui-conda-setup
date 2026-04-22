@@ -6,6 +6,8 @@
 
 本 Skill 提供一套完整的 ComfyUI 运行环境配置流程，涵盖从创建 conda 环境到修复已知兼容性问题的全部步骤。
 
+> **关于版本：** 本指南以 PyTorch 2.9.0 + CUDA 13.0 为例，这是目前相对稳定的新版本组合。如需使用其他版本，请根据 [PyTorch 官网](https://pytorch.org/get-started/locally/) 调整对应命令中的版本号和 `--index-url`，其余步骤相同。
+
 ## 目标环境配置
 
 | 项目 | 配置 |
