@@ -7,6 +7,8 @@ description: 在 Windows 上为 ComfyUI 创建和配置 conda 环境的完整指
 
 本 skill 指导在 Windows 平台上为 ComfyUI 创建一个完整的 conda 虚拟环境，包括 PyTorch (CUDA)、常用依赖包的安装，以及已知的兼容性问题的修复。
 
+> **关于版本：** 本指南以 PyTorch 2.9.0 + CUDA 13.0 为例，这是目前相对稳定的新版本组合。如需使用其他版本，请根据 [PyTorch 官网](https://pytorch.org/get-started/locally/) 调整对应命令中的版本号和 `--index-url`，其余步骤相同。
+
 ## 前提条件
 
 - Windows 10/11
@@ -22,19 +24,19 @@ description: 在 Windows 上为 ComfyUI 创建和配置 conda 环境的完整指
 2. 安装 PyTorch (CUDA 13.0)
 3. 安装 torchmetrics 和 torchsde
 4. 安装 xformers、SageAttention 和 triton
-5. 修复 opencv-python 的 NumPy 2.x 兼容性问题
+5. 安装 opencv-contrib-python
 
 ---
 
 ## 第一步：创建 conda 环境
 
-创建一个名为 `cfpy312t290cu130` 的环境，使用 Python 3.12：
+创建一个 conda 环境，使用 Python 3.12：
 
 ```bash
 conda create -n cfpy312t290cu130 python=3.12 -y
 ```
 
-环境命名规则为 `cf` + `py` + Python 版本 + `t` + PyTorch 版本 + `cu` + CUDA 版本，方便日后识别。
+> **关于环境名：** 环境名可自定义。以下命令以 `cfpy312t290cu130` 为例，命名规则为 `cf`（ComfyUI）+ `py312`（Python 3.12）+ `t290`（PyTorch 2.9.0）+ `cu130`（CUDA 13.0），方便识别版本。你也可以用任意名称（如 `comfyui`），将下文所有 `cfpy312t290cu130` 替换即可。
 
 创建完成后激活环境：
 
