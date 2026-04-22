@@ -23,7 +23,7 @@
 | triton | 3.6.0+ (via triton-windows) |
 | torchmetrics | 1.8.2 |
 | torchsde | 0.2.6 |
-| opencv-python | 最新版 (NumPy 2.x 兼容) |
+| opencv-contrib-python | 最新版 (NumPy 2.x 兼容，含 ximgproc 模块) |
 | NumPy | 2.x (PyTorch 自动安装) |
 
 ## 适配的 NVIDIA 显卡
@@ -61,8 +61,9 @@ conda run -n cfpy312t290cu130 pip install xformers==0.0.33
 conda run -n cfpy312t290cu130 pip install sageattention
 conda run -n cfpy312t290cu130 pip install triton-windows
 
-# 5. 修复 opencv-python 与 NumPy 2.x 的兼容性
-conda run -n cfpy312t290cu130 pip install --force-reinstall --no-cache-dir opencv-python
+# 5. 安装 opencv-contrib-python（含 ximgproc 等扩展模块，兼容 NumPy 2.x）
+conda run -n cfpy312t290cu130 pip uninstall opencv-python opencv-python-headless opencv-contrib-python-headless -y
+conda run -n cfpy312t290cu130 pip install --no-cache-dir opencv-contrib-python
 ```
 
 ### 验证安装
@@ -83,22 +84,27 @@ print('All packages OK!')
 
 官方 `triton` 包没有 Windows 版本，安装会报错。使用社区维护的 `triton-windows` 替代，导入时仍为 `import triton`，对 ComfyUI 完全透明。
 
-### opencv-python 与 NumPy 2.x 不兼容
+### opencv 包冲突与 guidedFilter 缺失
 
-PyTorch 2.9.0 会安装 NumPy 2.x，而旧版 opencv-python 与之 ABI 不兼容，导致：
+部分 ComfyUI 插件（如 ComfyUI_LayerStyle）依赖 `cv2.ximgproc` 模块中的 `guidedFilter`，该模块仅包含在 `opencv-contrib-python` 中，普通的 `opencv-python` 不提供。
+
+此外，多个 opencv 变体包（`opencv-python`、`opencv-python-headless`、`opencv-contrib-python`）共存会导致冲突，表现为：
 
 ```
-AttributeError: _ARRAY_API not found
-ImportError: numpy.core.multiarray failed to import
+Cannot import name 'guidedFilter' from 'cv2.ximgproc'
+Unable to import guidedFilter
 ```
 
-所有使用 `cv2` 的 ComfyUI 自定义节点会同时崩溃。解决方法：
+解决方法：卸载所有 opencv 变体，只安装 `opencv-contrib-python`：
 
 ```bash
-pip install --force-reinstall --no-cache-dir opencv-python
+pip uninstall opencv-python opencv-python-headless opencv-contrib-python-headless -y
+pip install --no-cache-dir opencv-contrib-python
 ```
 
-ComfyUI 的 WAS Node Suite 会尝试自动修复此问题，但在 Windows 上可能因跨盘符文件操作失败（`WinError 17`、`WinError 5`）而失败，因此需要手动执行。
+旧版 opencv-python 还可能与 NumPy 2.x ABI 不兼容（`numpy.core.multiarray failed to import`），安装最新的 `opencv-contrib-python`（≥ 4.13.0）可同时解决此问题。
+
+ComfyUI 的 WAS Node Suite 会尝试自动修复 opencv 问题，但在 Windows 上可能因跨盘符文件操作失败（`WinError 17`、`WinError 5`）而失败，因此需要手动执行。
 
 ## 安装为 Claude Code Skill
 

@@ -121,7 +121,11 @@ conda run -n cfpy312t290cu130 python -c "import sageattention; print('SageAttent
 
 ---
 
-## 第五步：安装 opencv-python（需先关闭 ComfyUI）
+## 第五步：安装 opencv-contrib-python（需先关闭 ComfyUI）
+
+### 为什么用 opencv-contrib-python
+
+部分 ComfyUI 插件（如 ComfyUI_LayerStyle）依赖 `cv2.ximgproc.guidedFilter`，该模块仅包含在 `opencv-contrib-python` 中，普通的 `opencv-python` 不提供。`opencv-contrib-python` 是 `opencv-python` 的超集，功能完全兼容。
 
 ### 兼容版本
 
@@ -129,13 +133,17 @@ conda run -n cfpy312t290cu130 python -c "import sageattention; print('SageAttent
 
 | 包 | 版本 | 说明 |
 |---|---|---|
-| opencv-python | 4.13.0.92 | 与 NumPy 2.4.4 + PyTorch 2.9.0 兼容 |
-| NumPy | 2.4.4 | opencv-python 4.13.0.92 的依赖，自动安装 |
+| opencv-contrib-python | 4.13.0.92 | 与 NumPy 2.4.4 + PyTorch 2.9.0 兼容，含 ximgproc 模块 |
+| NumPy | 2.4.4 | opencv-contrib-python 4.13.0.92 的依赖，自动安装 |
 
 ### 安装命令
 
 ```bash
-conda run -n cfpy312t290cu130 pip install --force-reinstall --no-cache-dir opencv-python==4.13.0.92
+# 先卸载所有其他 opencv 变体（消除冲突）
+conda run -n cfpy312t290cu130 pip uninstall opencv-python opencv-python-headless opencv-contrib-python-headless -y
+
+# 安装 opencv-contrib-python
+conda run -n cfpy312t290cu130 pip install --no-cache-dir opencv-contrib-python
 ```
 
 > **必须先关闭 ComfyUI！** 否则 `cv2.pyd` 被进程锁定，pip 无法覆盖文件（`WinError 5 拒绝访问`）。
@@ -144,13 +152,18 @@ conda run -n cfpy312t290cu130 pip install --force-reinstall --no-cache-dir openc
 
 #### 多个 opencv 包冲突
 
-某些 ComfyUI 节点会自动安装 `opencv-contrib-python`、`opencv-python-headless` 等变体。多个 opencv 包共存会导致 `cv2` 模块加载异常（如 `__version__` 缺失、`module 'cv2' has no attribute ...`）。**只保留 `opencv-python` 一个包：**
+某些 ComfyUI 节点会自动安装 `opencv-python`、`opencv-python-headless` 等变体。多个 opencv 包共存会导致 `cv2` 模块加载异常（如 `guidedFilter` 无法导入、`__version__` 缺失、`module 'cv2' has no attribute ...`）。**只保留 `opencv-contrib-python` 一个包：**
 
 ```bash
-conda run -n cfpy312t290cu130 pip uninstall opencv-contrib-python opencv-python-headless opencv-contrib-python-headless -y
+conda run -n cfpy312t290cu130 pip uninstall opencv-python opencv-python-headless opencv-contrib-python-headless -y
+conda run -n cfpy312t290cu130 pip install --no-cache-dir opencv-contrib-python
 ```
 
 如果卸载也报错（`WinError 17 跨盘符`），先关闭所有 Python 进程再试。
+
+#### guidedFilter 缺失
+
+启动时报错 `Cannot import name 'guidedFilter' from 'cv2.ximgproc'` 说明安装了不含 contrib 模块的 opencv 变体。按上述步骤重装 `opencv-contrib-python` 即可。
 
 #### 跨盘符 WinError 17 / WinError 5
 
@@ -161,12 +174,12 @@ pip 在 Windows 上卸载包时会尝试将 `.pyd` 文件移动到 C 盘临时�
 
 #### NumPy 2.x ABI 不兼容
 
-旧版 opencv-python（如 4.10.0）与 NumPy 2.x 的 ABI 不兼容，报错：
+旧版 opencv（如 4.10.0）与 NumPy 2.x 的 ABI 不兼容，报错：
 ```
 AttributeError: _ARRAY_API not found
 ImportError: numpy.core.multiarray failed to import
 ```
-升级到 `opencv-python >= 4.13.0` 即可解决。
+安装 `opencv-contrib-python >= 4.13.0` 即可解决。
 
 ---
 
@@ -221,7 +234,7 @@ print('All packages imported successfully!')
 | xformers | 0.0.33 |
 | SageAttention | 最新版 (1.0.6+) |
 | triton-windows | 最新版 (3.6.0+) |
-| opencv-python | 4.13.0.92（NumPy 2.x 兼容） |
+| opencv-contrib-python | 4.13.0.92（NumPy 2.x 兼容，含 ximgproc） |
 | NumPy | 2.4.4 |
 
 ## 硬件参考配置
